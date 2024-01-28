@@ -40,7 +40,18 @@ public class SessionManager {
         if(seesionCookie == null){
             return null;
         }
-        return sessionStore.get(seesionCookie.getName());
+        return sessionStore.get(seesionCookie.getValue());
+    }
+
+    /**
+     * 세션 만료
+     */
+    public void expire(HttpServletRequest request){
+        Cookie sessionCookie = findCookie(request, SESSION_COOKIE_NAME);
+        if(sessionCookie != null){
+            sessionStore.remove(sessionCookie.getValue());
+        }
+
     }
 
     public Cookie findCookie(HttpServletRequest request, String cookieName){
