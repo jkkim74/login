@@ -21,7 +21,7 @@
     </style>
 <body>
 
-	<input name="uploadFiles" type="file" id="fileinput" accept="image/*" onchange="checkFileLimit()" multiple="multiple" />
+	<input name="uploadFiles" type="file" id="fileinput" accept="image/*" multiple="multiple" />
  
     <div id="gallery"></div>
 	
@@ -78,7 +78,9 @@
 		var uploadfiles = document.querySelector('#fileinput');
 		uploadfiles.addEventListener('change', function () {
 			var files = this.files;
+			console.log("file length : "+files.length);
 			for(var i=0; i<files.length; i++){
+				console.log("file info"+i+"_name:"+this.files[i].name+":size="+this.files[i].size);
 				previewImage(this.files[i]);
 			}
 		 
@@ -107,14 +109,6 @@
 			reader.onload = (function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
 			reader.readAsDataURL(file);
 		}
-		  function checkFileLimit() {
-			const input = document.getElementById("fileInput");
-			if (input.file.length > 4) {
-			  alert("최대 4개의 파일만 선택할 수 있습니다.");
-			  input.value = ""; // 선택 초기화
-			}
-		  }
-
 	</script>
 
 </body>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="ko">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1">
+    <link type="text/css" rel="stylesheet" th:href="@{/css/style.css}"
+          href="../css/style.css">
+    <style>
+        #validMsgPopup, #confirmMsgPopup {
+            display:none;
+        }
+        #selectedImg {
+            display: flex;
+            /* overflow-x: auto; */
+            white-space: nowrap;
+            gap: 10px;
+        }
+        /* 전체 화면 오버레이 스타일 */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* 반투명 배경 */
+            display: none; /* 기본적으로 숨김 */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* 중앙에 위치한 스피너 */
+        #spinner {
+            width: 80px;
+            height: 80px;
+            background-image: url('https://dev.ybox.kt.com/yapp4/res/v4/assets/images/spinner.gif'); /* 스피너 이미지 파일 경로 */
+            background-size: contain;
+            background-repeat: no-repeat;
+            animation: spin 1s linear infinite;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 18px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 회전 애니메이션 */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>YSPOT</title>
+</head>
+
+<body>
+
+<form id="frm" name="frm" method="POST" enctype="multipart/form-data">
+
+    <input type="hidden" name="cntrNo" value="">
+    <input type="hidden" name="userId" value="">
+    <input type="hidden" name="ysid" value="">
+    <input type="hidden" name="autoLogin" value="">
+    <input type="hidden" name="osTp" value="">
+    <input type="hidden" name="appVrsn" value="">
+
+    <div class="container">
+        <header class="header">
+            <div class="header-inner">
+                <div class="header-title">
+                    <h2>글쓰기</h2>
+                </div>
+                <div class="header-back">
+                    <div class="header-icon">
+                        <i class="fa-back"></i>
+                    </div>
+                </div>
+                <div class="header-options"></div>
+            </div>
+        </header>
+        <main class="contents">
+            <div class="regist-container">
+                <div class="regist-form">
+                    <div class="regist-form-item">
+                        <p class="title">제목</p>
+                        <div class="regist-input">
+                            <input type="text" id="title" name="title" placeholder="예시 : 광화문 광장" maxlength="150">
+                        </div>
+                    </div>
+                    <div class="regist-form-item">
+                        <p class="title">태그</p>
+                        <div class="regist-input">
+                            <img src="https://dev.ybox.kt.com/yapp4/res/v4/assets/images/icon/icon_tag-black.svg" alt="">
+                            <input type="text" id="hashtags" name="hashtags" placeholder="예시 : #서울시 #종로구 #청진동 (최대 3개)" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="regist-form-item">
+                        <p class="title">사진 업로드</p>
+                        <div class="regist-upload">
+                            <div class="regist-upload-wrap">
+                                <div class="regist-upload-input">
+                                    <div class="cover">
+                                        <img src="https://dev.ybox.kt.com/yapp4/res/v4/assets/images/icon/icon_upload.svg" alt="">
+                                        <p>사진 업로드</p>
+                                    </div>
+                                    <input type="file" id="wgwgImgFileUpload" name="wgwgImgFiles" multiple>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="selectedImg"></div>
+                    <div class="regist-form-item">
+                        <p class="title">상세 소개</p>
+                        <div class="regist-textarea">
+                            <textarea id="placeIntro" name="placeIntro" rows="10"></textarea>
+                        </div>
+                    </div>
+                    <div class="regist-form-item">
+                        <p style="color: red; line-height: 1.3;">※ 개인 정보가 포함되어 있거나 규정에 위배되는 콘텐츠는 관리자가 통보 없이 삭제할 수 있습니다.</p>
+                    </div>
+
+
+                    <!-- 메시지 출력 공통 오버레이 -->
+                    <div id="validMsgPopup" class="popup" style="z-index:4;">
+                        <div class="popup-dimmed"></div>
+                        <div class="popup-inner alert">
+                        <div class="popup-inner-content">
+                            <p id="validMsg"></p>
+                        </div>
+                        <div class="popup-inner-footer confirm">
+                            <button type="button" id="validOkBtn" class="alert" onfocus="blur()">확인</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- //메시지 출력 공통 오버레이 -->
+
+                <!-- CONFIRM 메시지 출력 공통 오버레이 -->
+                <div id="confirmMsgPopup" class="popup" style="z-index:4;">
+                    <div class="popup-dimmed"></div>
+                    <div class="popup-inner alert">
+                        <div class="popup-inner-content">
+                            <p id="comFirmMsg"></p>
+                        </div>
+                        <div class="popup-inner-footer confirm">
+                            <button type="button" id="cfrmCancelBtn" class="alert" onfocus="blur()">취소</button>
+                            <span class="divider"></span>
+                            <button type="button" id="cfrmOkBtn" class="alert" onfocus="blur()">확인</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- //CONFIRM 메시지 출력 공통 오버레이 -->
+
+            </div>
+            <div class="regist-button">
+                <button id="saveBtn">등록하기</button>
+            </div>
+    </div>
+    </main>
+    </div>
+
+</form>
+<!-- 전체 화면 오버레이 -->
+<div id="overlay">
+    <div id="spinner"></div>
+</div>
+
+<form id="listFrm" name="listFrm" method="POST">
+    <input type="hidden" name="ysid" value="">
+    <input type="hidden" name="autoLogin" value="true">
+    <input type="hidden" name="osTp" value="G0001">
+    <input type="hidden" name="appVrsn" value="4.1.0">
+</form>
+
+<script type="text/javascript" src="../js/yspotCommon.js?v=1.0.1"></script>
+<script type="text/javascript" src="../js/wgwg2.js?v=1.0.1"></script>
+<script>
+    let contextPath = '/yapp4';
+    let conDtlToDelete = [], conDtlToDeleteSeq = [];
+
+    var saveWgwg = function() {
+        $('#overlay').css('display','flex');   // 전체 화면 레이어 표시
+        console.log('CHECK uploadedImages >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', uploadedImages);
+        let formData = new FormData();
+        formData.append('title', $('#title').val());
+        formData.append('hashtags', $('#hashtags').val());
+        formData.append('placeIntro', $('#placeIntro').val());
+        for (let i = 0; i < uploadedImages.length; i++) {
+            formData.append('wgwgImgFiles', uploadedImages[i]);
+        }
+        $.ajax({
+            type: 'POST'
+            , headers: {
+                cntrNo: $('[name=cntrNo]').val()
+                , ysid: $('[name=ysid]').val()
+                , autoLogin: $('[name=autoLogin]').val()
+                , osTp: $('[name=osTp]').val()
+                , appVrsn: $('[name=appVrsn]').val()
+            }
+            , url: 'https://dev.ybox.kt.com/yapp4/yspot/wgwg/rest/registerWgwg'
+            , data: formData
+            , processData: false
+            , contentType: false
+            , cache: false
+            , success: function(data) {
+                if (data.resultCd == '200') {
+
+                    uploadedImages = [];
+                    // 클로버 지급 팝업 -S
+                    console.log('======================>' + data.resultMap.awaResultCd);
+                    if (data.resultMap.awaResultCd == 'S') {
+                        console.log('======================>' + data.resultMap.issueCnt);
+                        let clvIssueCnt = data.resultMap.issueCnt + '개';
+                        // $('#overlay').hide();  // 오류 발생 시에도 레이어 숨김
+                        cloverIssuePopWithAction(clvIssueCnt,"WR");
+                    }else{
+                        //$('#overlay').hide();  // 오류 발생 시에도 레이어 숨김
+                        $('#frm').attr('action', 'https://dev.ybox.kt.com/yapp4/yspot/wgwg/main').submit();
+                    }
+                } else {
+                    //$('#overlay').hide();  // 오류 발생 시에도 레이어 숨김
+                    let msgStr = '처리 중 오류가 발생하였습니다.<br>잠시 후 다시 시도해 주세요';
+                    showValidMsgLayer(msgStr, null);
+                }
+            }
+            , error: function(err) {
+                //$('#overlay').hide();  // 오류 발생 시에도 레이어 숨김
+                console.log(err);
+            }
+            , complete: function() {
+                $('#overlay').hide();  // 오류 발생 시에도 레이어 숨김
+                $('#saveBtn').prop('disabled', false);
+                //$("#frm")[0].reset();
+            }
+        });
+    };
+
+    //뒤로가기 url 호출로 수정 처리 jgk
+    $(document).ready(function() {
+        preventBackNavigation();
+    });
+
+</script>
+
+</body>
+</html>

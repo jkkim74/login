@@ -14,4 +14,14 @@ public class ImageController {
     public String uploadImg(){
         return "upload/imageUploader";
     }
+
+    @GetMapping("/write")
+    public String write(){
+        return "upload/write";
+    }
+
+    @GetMapping("/test_new")
+    public String test_new(){
+        return "upload/test_new";
+    }
 }
